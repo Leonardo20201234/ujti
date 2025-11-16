@@ -1,5 +1,4 @@
 /*-----------------------------------------------------------------------------
-
 Generator of the geodesic equations for a general axisymmetric stationary metric
 in spherical-like coordinates. This serves as a basis for any metric that can
 be expressed as ds^2 = -V dt + 2W dt dph + X dr^2 + Y dth^2 + Z dph^2
@@ -8,8 +7,9 @@ Note: indices in Maxima run from 1 thru 4, and in Fortran from 0 to 3.
 
 Output files:
     sphax-metric.f90 : general metric components (expecting "potentials")
-    sphax-geq.f90 : general geodesic equations (expecting "potentials" and
+    sphax-geq.f90    : general geodesic equations (expecting "potentials" and
       their derivatives w.r.t. all spherical coordinates)
+    sphax-fem.f90    : electromagnetic tensor Fem1 components
 
 (This is needed to run only once; the specific metric is specified elsewhere)
 ------------------------------------------------------------------------------*/
@@ -19,17 +19,15 @@ load("ctensor")$
 /* Spherical-like coordinates*/
 ct_coords:[t,r,th,ph]$
 
-
 /* lg: covariant metric g_{mu,nu} */
 lg: zeromatrix(4,4)$
-
 
 /*
   define the metric "potentials" V,W,X,Y,Z
   example: px means the *p*otential *x*
   The potentials only depend on r and th
 */
-depends([pv, pw, px, py, pz],[r,th])$
+depends([pv, pw, px, py, pz, At, Aph],[r,th])$
 
 lg[1,1]: -pv $
 lg[1,4]: pw $
@@ -38,12 +36,13 @@ lg[2,2]: px $
 lg[3,3]: py $
 lg[4,4]: pz $
 
-
 /* calculate the inverse metric and mixed christoffel symbols */
 cmetric()$
 christof(false)$
 
-pot_symb: [pv, pw, px, py, pz]$
+pot_symb: [pv, pw, px, py, pz, At, Aph]$
+A_symb: [At,0,0,Aph]$
+rth_symb: [t,r, th,ph]$
 
 for i thru 4 do
     for j thru 4 do
@@ -71,11 +70,26 @@ geqrhs_symb: [0,0,0,0]$
 
 u: [vel(0), vel(1), vel(2), vel(3)]$
 
+/* Electromagnetic field tensors */
+Fem1: zeromatrix(4,4)$
+Fem2: zeromatrix(4,4)$
+
+for k thru 4 do
+    for i thru 4 do(
+        Fem1[k,i]: diff(A_symb[i],rth_symb[k]) - diff(A_symb[k],rth_symb[i])
+        )$
+
 for k thru 4 do
     for i thru 4 do
-        for j thru 4 do
-            geqrhs_symb[k]: geqrhs_symb[k] - mcs[i,j,k]*u[i]*u[j]$
+        for j thru 4 do(
+            Fem2[k,i]: Fem2[k,i] + ug[k,j]*Fem1[i,j]
+            )$
 
+for k thru 4 do
+    for i thru 4 do
+        for j thru 4 do(
+            geqrhs_symb[k]: geqrhs_symb[k] - mcs[i,j,k]*u[i]*u[j] + e*Fem2[k,i]*u[i]
+            )$
 
 load("f90")$
 
@@ -88,3 +102,12 @@ with_stdout( "sphax-metric.f90",
 with_stdout( "sphax-geq.f90",
   for i thru 4 do ( f90( geqrhs(i-1) = geqrhs_symb[i]), print("") )
 )$
+
+/* Writing the electromagnetic tensor Fem1 */
+with_stdout( "sphax-fem.f90",
+  for i thru 4 do
+    for j thru 4 do (
+      f90( Fem1(i-1,j-1) = Fem1[i,j] )
+    )
+)$
+

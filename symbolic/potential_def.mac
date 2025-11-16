@@ -1,10 +1,10 @@
 /*-----------------------------------------------------------------------------
-Writing of potentials and their derivatives to fortran source code
+Writing of potentials, their derivatives, and electromagnetic tensor Fem1
+to fortran source code
 
 Directions: write a maxima script with the potentials using the variables
 defined below. After defining everything, call the function write_pot_fortran()
 to calculate and write.
-
 ------------------------------------------------------------------------------*/
 
 print("
@@ -12,7 +12,7 @@ print("
                 o `.                                   o     _
                     \\          Cinespa UCR 2019  *  ( ) GANDREOLIVA.org
 =======================================================================
-  Symbolic metric in Maxima --> Potentials and derivatives
+  Symbolic metric in Maxima --> Potentials, derivatives, and Fem1
   for the Fortran numeric modules.
 -----------------------------------------------------------------------
 ")$
@@ -27,8 +27,7 @@ print("-----------------------------------------------------------------------")
 
 dir : "" $
 
-
-/* Fortran code that wraps up the metric potentials and derivs. in a module */
+/* Fortran code that wraps up the metric potentials, derivs, and Fem1 in a module */
 
 code1 :
 " use, intrinsic :: iso_fortran_env, dp=>real64
@@ -60,19 +59,28 @@ code3 :
 
 code4 :
 "  end function
+  function get_Fem1(pos) result(Fem1)
+    real(dp), dimension(0:3) :: pos
+    real(dp), dimension(0:3,0:3) :: Fem1
+    real(dp) :: t,r,th,ph
+    t=pos(0); r=pos(1); th=pos(2); ph=pos(3)
+    include \""//metric_name//"-fem.f90"//"\"
+
+code5 :
+"  end function
 end module
 "$
 
 
-
 /*
 write_pot_fortran()
-  Writes the potentials and derivs. to the following files:
-    [metric_name]-pot.f90: the potentials
-    [metric_name]-dpot.f90: the derivatives of the potentials
-    [metric_name]-param.f90: the list of parameters (only def. of vars.)
-    [metric_name].f90: a Fortran module named [metric_name], with functions
-      to access the potentials and their derivatives.
+  Writes the potentials, derivs, and Fem1 to the following files:
+    [metric_name]-pot.f90   : the potentials
+    [metric_name]-dpot.f90  : the derivatives of the potentials
+    [metric_name]-fem.f90   : the electromagnetic tensor Fem1
+    [metric_name]-param.f90 : the list of parameters (only def. of vars.)
+    [metric_name].f90       : a Fortran module named [metric_name], with functions
+                              to access the potentials, their derivatives, and Fem1.
 */
 
 write_pot_fortran() := block(
@@ -100,6 +108,12 @@ write_pot_fortran() := block(
     )
   ),
 
+  with_stdout( sconcat(dir,metric_name,"-fem.f90"),
+    for i thru 4 do
+      for j thru 4 do (
+        f90( Fem1(i-1,j-1) = Fem1[i,j] )
+      )
+  ),
 
   with_stdout( sconcat(dir,metric_name,"-param.f90"),
     for metric_parameter in metric_parameters do(
@@ -115,7 +129,8 @@ write_pot_fortran() := block(
     print(sconcat("    include \"",metric_name,"-pot.f90","\"")),
     print(code3),
     print(sconcat("    include \"",metric_name,"-dpot.f90","\"")),
-    print(code4)
+    print(code4),
+    print(code5)
    ),
 
    print("Done (if no errors)."),
@@ -123,3 +138,4 @@ write_pot_fortran() := block(
    If necessary, run the python script f90-single2double.py to make the conversion")
 
 )$
+

@@ -4,15 +4,17 @@ module geq_sphax_base
   real(dp) :: asp_ratio ! rpolar / requatorial
   real(dp) :: surf_r_eq
   real(dp) :: surf_bl_a
+
   interface
-    function pot_generic(pos) result(pot)
+    function pot_generic(pos)
       import dp
       real(dp), dimension(0:3) :: pos
       real(dp), dimension(1:5) :: pot
       ! Index convention:
       !   pot: {1: V, 2: W, 3: X, 4: Y, 5: Z}
     end function
-    function dpot_generic(pos) result(dpot)
+
+    function dpot_generic(pos)
       import dp
       real(dp), dimension(0:3) :: pos
       real(dp), dimension(1:5,1:2) :: dpot
@@ -22,11 +24,20 @@ module geq_sphax_base
       !   dpot, second index: (variable w.r.t. which we differentiate)
       !     {1: r, 2: th}
     end function
+
+    function get_Fem1(pos)
+      import dp
+      real(dp), dimension(0:3) :: pos
+      real(dp), dimension(0:3,0:3) :: Fem1
+    end function
   end interface
+
   procedure(pot_generic), pointer :: selected_pot_func => null()
   procedure(dpot_generic), pointer :: selected_dpot_func => null()
   save
+
 contains
+
   function get_metric(pos) result(metric)
     real(dp), dimension(0:3,0:3) :: metric
     real(dp), dimension(0:3) :: pos
@@ -34,6 +45,7 @@ contains
     pot = selected_pot_func(pos)
     include "sphax-metric.f90"
   end function
+
   function geqrhs(pos, vel)
     real(dp), dimension(0:3) :: geqrhs
     real(dp), dimension(0:3) :: pos
@@ -44,6 +56,13 @@ contains
     dpot = selected_dpot_func(pos)
     include "sphax-geq.f90"
   end function
+
+  function get_Fem1_base(pos)
+    real(dp), dimension(0:3) :: pos
+    real(dp), dimension(0:3,0:3) :: Fem1
+    Fem1 = get_Fem1(pos)
+  end function
+
   function surface_sph(pos,padding)
     real(dp) :: padding
     real(dp), dimension(0:3) :: pos
@@ -54,6 +73,7 @@ contains
       surface_sph = .false.
     end if
   end function
+
   function surface_bl(pos,padding)
     real(dp) :: padding
     real(dp), dimension(0:3) :: pos
@@ -69,4 +89,5 @@ contains
       end if
     end associate
   end function
+
 end module
