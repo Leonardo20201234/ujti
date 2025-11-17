@@ -57,7 +57,7 @@ contains
     include "sphax-geq.f90"
   end function
 
-  function get_Fem1_base(pos)
+  function get_Fem1_base(pos) result(Fem1)
     real(dp), dimension(0:3) :: pos
     real(dp), dimension(0:3,0:3) :: Fem1
     Fem1 = get_Fem1(pos)

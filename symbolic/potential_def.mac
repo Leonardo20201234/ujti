@@ -64,7 +64,8 @@ code4 :
     real(dp), dimension(0:3,0:3) :: Fem1
     real(dp) :: t,r,th,ph
     t=pos(0); r=pos(1); th=pos(2); ph=pos(3)
-    include \""//metric_name//"-fem.f90"//"\"
+"$
+
 
 code5 :
 "  end function
@@ -130,6 +131,7 @@ write_pot_fortran() := block(
     print(code3),
     print(sconcat("    include \"",metric_name,"-dpot.f90","\"")),
     print(code4),
+    print(sconcat("    include \"",metric_name,"-fem.f90\"")),
     print(code5)
    ),
 

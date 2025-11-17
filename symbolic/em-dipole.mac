@@ -1,0 +1,27 @@
+/* em-dipole.mac
+   Cuadripotencial A_mu para un campo dipolar en coordenadas esféricas
+   Convención: x^0 = t, x^1 = r, x^2 = theta, x^3 = phi
+*/
+
+/* Parámetro del dipolo */
+mu: 'mu;
+
+/* Definición del cuadripotencial A_mu */
+A[0]: 0;
+A[1]: 0;
+A[2]: 0;
+A[3]: mu*sin(theta)^2/r;
+
+/* Tensor de Faraday F_{mu nu} = d_mu A_nu - d_nu A_mu */
+F[mu,nu] := diff(A[nu], x[mu]) - diff(A[mu], x[nu]);
+
+/* Exportar a Fortran */
+with_stdout("gensrc/em_dipole_A.f90",
+    fortran(A)
+)$
+
+with_stdout("gensrc/em_dipole_F.f90",
+    for mu:0 thru 3 do
+        for nu:0 thru 3 do
+            fortran(F[mu,nu])
+)$
