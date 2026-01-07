@@ -40,7 +40,8 @@ lg[4,4]: pz $
 cmetric()$
 christof(false)$
 
-pot_symb: [pv, pw, px, py, pz, At, Aph]$
+pot_symb: [pv, pw, px, py, pz]$
+empot_symb: [At, Aph]$
 A_symb: [At,0,0,Aph]$
 rth_symb: [t,r, th,ph]$
 
@@ -79,6 +80,19 @@ for k thru 4 do
         Fem1[k,i]: diff(A_symb[i],rth_symb[k]) - diff(A_symb[k],rth_symb[i])
         )$
 
+for i thru 4 do
+    for j thru 4 do
+        for l thru 2 do
+            for h thru 2 do(
+                Fem1[i,j]: subst(dempot[h,l],'diff(empot_symb[h],ct_coords[l+1]),Fem1[i,j])
+            )$
+
+for i thru 4 do
+    for j thru 4 do
+        for h thru 2 do(
+            Fem1[i,j]: subst(empot[h],empot_symb[h],Fem1[i,j])
+        )$
+
 for k thru 4 do
     for i thru 4 do
         for j thru 4 do(
@@ -110,4 +124,3 @@ with_stdout( "sphax-fem.f90",
       f90( Fem1(i-1,j-1) = Fem1[i,j] )
     )
 )$
-

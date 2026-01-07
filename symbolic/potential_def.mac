@@ -18,10 +18,11 @@ print("
 ")$
 
 print("Coordinate names: t,r,th,ph,")$
-print("Potential names: pv,pw,px,py,pz")$
+print("Potential names: pv,pw,px,py,pz,At,Aph")$
 print("The potentials can only depend on r and th")$
 print("Parameters: put (lowercase) symbols in a list called metric_parameters")$
 print("Name of the metric : metric_name")$
+print("Name of the electromagnetic potential : electromagneticpotential_name")$
 print("Output dir: dir (default: '', working directory)")$
 print("-----------------------------------------------------------------------")$
 
@@ -38,9 +39,9 @@ code2 :
 contains
   function get_potential(pos) result(pot)
     real(dp), dimension(0:3) :: pos
-    real(dp), dimension(1:5) :: pot
+    real(dp), dimension(1:7) :: pot
     ! Index convention:
-    !   pot: {1: V, 2: W, 3: X, 4: Y, 5: Z}
+    !   pot: {1: V, 2: W, 3: X, 4: Y, 5: Z, 6: At, 7: Aph}
     real(dp) :: t,r,th,ph
     t=pos(0); r=pos(1); th=pos(2); ph=pos(3)"$
 
@@ -59,18 +60,33 @@ code3 :
 
 code4 :
 "  end function
-  function get_Fem1(pos) result(Fem1)
+  function get_electromagnetic_potential(pos) result(empot)
     real(dp), dimension(0:3) :: pos
-    real(dp), dimension(0:3,0:3) :: Fem1
+    real(dp), dimension(1:2) :: empot
+    ! Index convention:
+    !   empot: {1: At, 2: Aph}
     real(dp) :: t,r,th,ph
-    t=pos(0); r=pos(1); th=pos(2); ph=pos(3)
-"$
-
+    t=pos(0); r=pos(1); th=pos(2); ph=pos(3)"$
 
 code5 :
 "  end function
+  function get_deriv_electromagnetic_potential(pos) result(dempot)
+    real(dp), dimension(0:3) :: pos
+    real(dp), dimension(1:2,1:2) :: dempot
+    ! Index convention:
+    !   dempot, first index:
+    !     {1: At, 2: Aph}
+    !   dempot, second index: (variable w.r.t. which we differentiate)
+    !     {1: r, 2: th}
+    real(dp) :: t,r,th,ph
+    t=pos(0); r=pos(1); th=pos(2); ph=pos(3)"$
+
+code6 :
+"  end function
 end module
 "$
+
+
 
 
 /*
@@ -78,9 +94,14 @@ write_pot_fortran()
   Writes the potentials, derivs, and Fem1 to the following files:
     [metric_name]-pot.f90   : the potentials
     [metric_name]-dpot.f90  : the derivatives of the potentials
-    [metric_name]-fem.f90   : the electromagnetic tensor Fem1
+    [electromagneticpotential_name]-empot.f90  : the electromagnetic potentials
+    [electromagneticpotential_name]-dempot.f90 : the derivatives of the electromagnetic potentials
+    [electromagneticpotential_name]-fem.f90   : the electromagnetic tensor Fem1
     [metric_name]-param.f90 : the list of parameters (only def. of vars.)
+    [electromagneticpotential_name]-param.f90 : the list of parameters (only def. of vars.)
     [metric_name].f90       : a Fortran module named [metric_name], with functions
+                              to access the potentials, their derivatives, and Fem1.
+    [electromagneticpotential_name].f90       : a Fortran module named [electromagneticpotential_name], with functions
                               to access the potentials, their derivatives, and Fem1.
 */
 
@@ -89,9 +110,18 @@ write_pot_fortran() := block(
   dpot_dr: [0,0,0,0,0],
   dpot_dth: [0,0,0,0,0],
 
+  empot_func: [At, Aph],
+  dempot_dr: [0,0],
+  dempot_dth: [0,0],
+
   for i thru 5 do(
     dpot_dr[i]:  diff(pot_func[i],r),
     dpot_dth[i]: diff(pot_func[i],th)
+  ),
+  
+  for i thru 2 do(
+    dempot_dr[i]:  diff(empot_func[i],r),
+    dempot_dth[i]: diff(empot_func[i],th)
   ),
 
   load("f90"),
@@ -109,16 +139,16 @@ write_pot_fortran() := block(
     )
   ),
 
-  with_stdout( sconcat(dir,metric_name,"-fem.f90"),
-    for i thru 4 do
-      for j thru 4 do (
-        f90( Fem1(i-1,j-1) = Fem1[i,j] )
-      )
+  with_stdout( sconcat(dir,electromagneticpotential_name,"-empot.f90"),
+    for i thru 2 do(
+      f90( empot(i) = empot_func[i] )
+    )
   ),
 
-  with_stdout( sconcat(dir,metric_name,"-param.f90"),
-    for metric_parameter in metric_parameters do(
-      print("real(dp) :: ",metric_parameter)
+  with_stdout( sconcat(dir,electromagneticpotential_name,"-dempot.f90"),
+    for i thru 2 do(
+      f90( dempot(i,1) = dempot_dr[i] ),
+      f90( dempot(i,2) = dempot_dth[i] )
     )
   ),
 
@@ -131,8 +161,10 @@ write_pot_fortran() := block(
     print(code3),
     print(sconcat("    include \"",metric_name,"-dpot.f90","\"")),
     print(code4),
-    print(sconcat("    include \"",metric_name,"-fem.f90\"")),
-    print(code5)
+    print(sconcat("    include \"",electromagneticpotential_name,"-empot.f90","\"")),
+    print(code5),
+    print(sconcat("    include \"",electromagneticpotential_name,"-dempot.f90","\"")),
+    print(code6)
    ),
 
    print("Done (if no errors)."),
@@ -140,4 +172,3 @@ write_pot_fortran() := block(
    If necessary, run the python script f90-single2double.py to make the conversion")
 
 )$
-

@@ -25,15 +25,29 @@ module geq_sphax_base
       !     {1: r, 2: th}
     end function
 
-    function get_Fem1(pos)
+    function empot_generic(pos)
       import dp
       real(dp), dimension(0:3) :: pos
-      real(dp), dimension(0:3,0:3) :: Fem1
+      real(dp), dimension(1:2) :: empot
+      ! Index convention:
+      !   empot: {1: At, 2: Aph}
     end function
-  end interface
+
+    function dempot_generic(pos)
+      import dp
+      real(dp), dimension(0:3) :: pos
+      real(dp), dimension(1:2,1:2) :: dempot
+      ! Index convention:
+      !   dempot, first index:
+      !     {1: At, 2: Aph}
+      !   dempot, second index: (variable w.r.t. which we differentiate)
+      !     {1: r, 2: th}
+    end function
 
   procedure(pot_generic), pointer :: selected_pot_func => null()
   procedure(dpot_generic), pointer :: selected_dpot_func => null()
+  procedure(empot_generic), pointer :: selected_empot_func => null()
+  procedure(dempot_generic), pointer :: selected_dempot_func => null()
   save
 
 contains
@@ -58,9 +72,13 @@ contains
   end function
 
   function get_Fem1_base(pos) result(Fem1)
-    real(dp), dimension(0:3) :: pos
     real(dp), dimension(0:3,0:3) :: Fem1
-    Fem1 = get_Fem1(pos)
+    real(dp), dimension(0:3) :: pos
+    real(dp), dimension(1:2) :: empot  
+    real(dp), dimension(1:2,1:2) :: dempot 
+    empot = selected_empot_func(pos)
+    dempot = selected_dempot_func(pos)
+    include "sphax-geq.f90"
   end function
 
   function surface_sph(pos,padding)

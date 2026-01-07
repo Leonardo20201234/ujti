@@ -1,0 +1,17 @@
+/* 
+em-dipole.mac
+Run as: maxima -b electromagneticpotential-name.mac
+*/
+
+
+load("symbolic/potential_def.mac")$
+/* Definición del cuadripotencial A_mu */
+At:  0;
+Aph: mu*sin(theta)^2/r;
+
+metric_parameters: [m,q,a]$
+electromagneticpotential_name: "dipole"$
+
+dir: "gensrc/"$
+
+write_pot_fortran()$
