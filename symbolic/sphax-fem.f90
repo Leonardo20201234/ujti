@@ -1,0 +1,16 @@
+fem(0,0) = 0
+fem(0,1) = -dempot(1,1)
+fem(0,2) = -dempot(1,2)
+fem(0,3) = 0
+fem(1,0) = dempot(1,1)
+fem(1,1) = 0
+fem(1,2) = 0
+fem(1,3) = dempot(2,1)
+fem(2,0) = dempot(1,2)
+fem(2,1) = 0
+fem(2,2) = 0
+fem(2,3) = dempot(2,2)
+fem(3,0) = 0
+fem(3,1) = -dempot(2,1)
+fem(3,2) = -dempot(2,2)
+fem(3,3) = 0

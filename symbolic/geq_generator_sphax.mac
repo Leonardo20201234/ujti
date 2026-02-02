@@ -121,6 +121,6 @@ with_stdout( "sphax-geq.f90",
 with_stdout( "sphax-fem.f90",
   for i thru 4 do
     for j thru 4 do (
-      f90( Fem1(i-1,j-1) = Fem1[i,j] )
+      f90( fem(i-1,j-1) = Fem1[i,j] )
     )
 )$
