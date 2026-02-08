@@ -50,6 +50,12 @@ for i thru 4 do
       lg[i,j]: subst(pot[k],pot_symb[k],lg[i,j])
     )$
 
+for i thru 4 do
+  for j thru 4 do
+    for h thru 5 do(
+      ug[i,j]: subst(pot[h],pot_symb[h],ug[i,j])
+    )$
+
 /* Electromagnetic field tensors */
 Fem1: zeromatrix(4,4)$
 Fem2: zeromatrix(4,4)$

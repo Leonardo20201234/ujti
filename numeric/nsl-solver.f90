@@ -17,11 +17,12 @@ module nsl_solver
       real(dp), dimension(0:3,0:3) :: metric
       real(dp), dimension(0:3) :: pos
     end function
-    function geqrhs(pos, vel)
+    function geqrhs(pos, vel, e)
       import dp
       real(dp), dimension(0:3) :: geqrhs
       real(dp), dimension(0:3) :: pos
       real(dp), dimension(0:3) :: vel
+      real(dp) :: e
     end function
     function surface(pos,padding)
       import dp
@@ -39,7 +40,7 @@ module nsl_solver
 
 contains
 
-  subroutine grsh_cart_rkf_tl(x,u,om,rot,lmax,dlmin,dlmax,tol,z,on_surf,tl)
+  subroutine grsh_cart_rkf_tl(x,u,om,rot,lmax,dlmin,dlmax,tol,e,z,on_surf,tl)
     ! GR frequency shift for 1 geodesic cartesian -> specific coords
     !
     ! Arguments
@@ -54,6 +55,7 @@ contains
     !   rot : angular velocity of the NS. t[g]/R = c*t[SI]/R
     !       => rot[g] = rot[SI]/c = 2*pi*f/c. In units of R = 1, f -> f*R
     !       => (rot[g]*R) = 2*pi*f*R/c
+    !   e : charge of the particle (0 for photons)
     !   tl : timeout for the calculation
     !
     ! Returns
@@ -64,7 +66,7 @@ contains
     !   on_surf : true if the photon reached the surface of the NS
 
     real(dp), dimension(0:3), intent(inout) :: x,u
-    real(dp), intent(in) :: lmax,om,dlmin,dlmax,tol,rot
+    real(dp), intent(in) :: lmax,om,dlmin,dlmax,tol,rot,e
     real(dp), intent(out) :: z
     logical, intent(out) :: on_surf
     real(dp) :: resc,dl,l,delta,om_i,om_f
@@ -109,15 +111,15 @@ contains
       end if
 
         ! k's of RKF method
-        k1=dl*selected_geqrhs(x,u)
-        k2=dl*selected_geqrhs(x+c21*k1,u+c21*k1)
-        k3=dl*selected_geqrhs(x+c31*k1+c32*k2,u+c31*k1+c32*k2)
+        k1=dl*selected_geqrhs(x,u,e)
+        k2=dl*selected_geqrhs(x+c21*k1,u+c21*k1,e)
+        k3=dl*selected_geqrhs(x+c31*k1+c32*k2,u+c31*k1+c32*k2,e)
         k4=dl*selected_geqrhs(x+c41*k1+c42*k2+c43*k3,&
-            &u+c41*k1+c42*k2+c43*k3)
+            &u+c41*k1+c42*k2+c43*k3,e)
         k5=dl*selected_geqrhs(x+c51*k1+c52*k2+c53*k3+c54*k4,&
-            &u+c51*k1+c52*k2+c53*k3+c54*k4)
+            &u+c51*k1+c52*k2+c53*k3+c54*k4,e)
         k6=dl*selected_geqrhs(x+c61*k1+c62*k2+c63*k3+c64*k4+c65*k5,&
-            &u+c61*k1+c62*k2+c63*k3+c64*k4+c65*k5)
+            &u+c61*k1+c62*k2+c63*k3+c64*k4+c65*k5,e)
         ku1=dl*u
         ku2=dl*(u+c21*k1)
         ku3=dl*(u+c31*k1+c32*k2)
@@ -185,10 +187,10 @@ contains
     ! write(outputfile) logical(.true.,1), 1d0, 0d0, 0d0
   end subroutine
 
-  ! subroutine grsh_cart_eul(x,u,om,rot,lmax,dl,z,on_surf)
+  ! subroutine grsh_cart_eul(x,u,om,rot,lmax,dl,e,z,on_surf)
   !
   !   real(dp), dimension(0:3), intent(inout) :: x,u
-  !   real(dp), intent(in) :: lmax,dl,om,rot
+  !   real(dp), intent(in) :: lmax,dl,om,rot,e
   !   real(dp), intent(out) :: z
   !   logical, intent(out) :: on_surf
   !   real(dp) :: om_i,om_f,l
@@ -214,7 +216,7 @@ contains
   !   do while(l < lmax)
   !       ! k's of RKF method
   !           l = l + dl
-  !           u = u + selected_geqrhs(x,u)*dl
+  !           u = u + selected_geqrhs(x,u,e)*dl
   !           x = x + u*dl
   !
   !           ! if the surface is reached...
