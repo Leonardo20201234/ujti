@@ -17,12 +17,12 @@ module indiv_ngeod_solver
       real(dp), dimension(0:3,0:3) :: metric
       real(dp), dimension(0:3) :: pos
     end function
-    function geqrhs(pos, vel, q)
+    function geqrhs(pos, vel, e)
       import dp
       real(dp), dimension(0:3) :: geqrhs
       real(dp), dimension(0:3) :: pos
       real(dp), dimension(0:3) :: vel
-      real(dp) :: q
+      real(dp) :: e
     end function
     function surface(pos,padding)
       import dp

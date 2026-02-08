@@ -14,9 +14,11 @@ print("
 ")$
 
 print("Coordinate names: t,r,th,ph,")$
-print("Potential names: pv,pw,px,py,pz,At,Ar,Ath,Aph")$
+print("Potential names: pv,pw,px,py,pz")$
+print("Cuadripotential names: At,Ar,Ath,Aph")$
 print("The potentials can only depend on r and th")$
-print("Parameters: put (lowercase) symbols in a list called metric_parameters")$
+print("The cuadripotentials can depend on t,r, th and ph")$
+print("Parameters: put (lowercase) symbols in a list called metric_parameters and em_parameters")$
 print("Name of the metric : metric_name")$
 print("Name of the electromagnetic potential : em_name")$
 print("Output dir: dir (default: '', working directory)")$
@@ -56,7 +58,7 @@ code3 :
 
 code4 :
 "  end function
-  function get_electromagnetic_potential(pos) result(empot)
+  function get_empotential(pos) result(empot)
     real(dp), dimension(0:3) :: pos
     real(dp), dimension(1:4) :: empot
     ! Index convention:
@@ -66,7 +68,7 @@ code4 :
 
 code5 :
 "  end function
-  function get_deriv_electromagnetic_potential(pos) result(dempot)
+  function get_deriv_empotential(pos) result(dempot)
     real(dp), dimension(0:3) :: pos
     real(dp), dimension(1:4,1:4) :: dempot
     ! Index convention:

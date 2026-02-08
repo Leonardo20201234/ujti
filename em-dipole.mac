@@ -2,9 +2,8 @@
 em-dipole.mac
 Run as: maxima -b em-dipole.mac
 */
-
 load("symbolic/potential_def.mac")$
-
+mu:1$
 /* Definición del cuadripotencial A_mu */
 At:  0;
 Ar:  0;
@@ -12,7 +11,7 @@ Ath: 0;
 Aph: mu*sin(th)^2/r;
 
 /* Parámetros electromagnéticos: momento dipolar magnético */
-em_parameters: [mu]$
+em_parameters: []$
 em_name: "dipole"$
 
 dir: "gensrc/"$

@@ -25,6 +25,7 @@ printf "use $1" > $metricname_tempfile
 # Fortran code, parameter transformations
 frutos_paramtransf="
 q = -q
+e = e
 "
 gb_paramtransf="
 "
@@ -91,6 +92,4 @@ gfortran raytr-metric.f90 -O0 -Ibin/so/ bin/so/geq-sphax-base.o\
   bin/so/$1.o\
   bin/so/indiv-ngeod-solver.o\
   bin/so/coord.o\
-  bin/em_dipole_A.o\
-  bin/em_dipole_F.o\
   -o bin/raytr-$1
