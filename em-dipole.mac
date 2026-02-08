@@ -9,7 +9,7 @@ load("symbolic/potential_def.mac")$
 At:  0;
 Ar:  0;
 Ath: 0;
-Aph: mu*sin(theta)^2/r;
+Aph: mu*sin(th)^2/r;
 
 /* Parámetros electromagnéticos: momento dipolar magnético */
 em_parameters: [mu]$

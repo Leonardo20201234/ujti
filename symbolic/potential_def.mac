@@ -1,10 +1,6 @@
 /*-----------------------------------------------------------------------------
 Writing of potentials, their derivatives, and electromagnetic tensor Fem1
 to fortran source code
-
-Directions: write a maxima script with the potentials using the variables
-defined below. After defining everything, call the function write_pot_fortran()
-to calculate and write.
 ------------------------------------------------------------------------------*/
 
 print("
@@ -18,7 +14,7 @@ print("
 ")$
 
 print("Coordinate names: t,r,th,ph,")$
-print("Potential names: pv,pw,px,py,pz,At,Aph")$
+print("Potential names: pv,pw,px,py,pz,At,Ar,Ath,Aph")$
 print("The potentials can only depend on r and th")$
 print("Parameters: put (lowercase) symbols in a list called metric_parameters")$
 print("Name of the metric : metric_name")$
@@ -39,9 +35,9 @@ code2 :
 contains
   function get_potential(pos) result(pot)
     real(dp), dimension(0:3) :: pos
-    real(dp), dimension(1:7) :: pot
+    real(dp), dimension(1:5) :: pot
     ! Index convention:
-    !   pot: {1: V, 2: W, 3: X, 4: Y, 5: Z, 6: At, 7: Aph}
+    !   pot: {1: V, 2: W, 3: X, 4: Y, 5: Z}
     real(dp) :: t,r,th,ph
     t=pos(0); r=pos(1); th=pos(2); ph=pos(3)"$
 
@@ -72,12 +68,12 @@ code5 :
 "  end function
   function get_deriv_electromagnetic_potential(pos) result(dempot)
     real(dp), dimension(0:3) :: pos
-    real(dp), dimension(1:4,1:2) :: dempot
+    real(dp), dimension(1:4,1:4) :: dempot
     ! Index convention:
     !   dempot, first index:
     !     {1: At, 2: Ar, 3: Ath, 4: Aph}
     !   dempot, second index: (variable w.r.t. which we differentiate)
-    !     {1: r, 2: th}
+    !     {1: t, 2: r, 3: th, 4: ph}
     real(dp) :: t,r,th,ph
     t=pos(0); r=pos(1); th=pos(2); ph=pos(3)"$
 
@@ -85,8 +81,6 @@ code6 :
 "  end function
 end module
 "$
-
-
 
 
 /*
@@ -125,9 +119,10 @@ write_metric_fortran() := block(
   ),
 
   with_stdout( sconcat(dir,metric_name,"-param.f90"),
-    for p in metric_parameters do(
-      print(sconcat("  real(dp) :: ",p))
-    )
+    if listp(metric_parameters) then
+      for p in metric_parameters do(
+        print(sconcat("  real(dp) :: ",p))
+      )
   ),
 
   with_stdout( sconcat(dir,metric_name,".f90"),
@@ -158,33 +153,41 @@ write_em_fortran() := block(
     return(false)
   ),
   
-  empot_func: [At, 0, 0, Aph],
+  empot_func: [At, Ar, Ath, Aph],
+  dempot_dt: [0,0,0,0],
   dempot_dr: [0,0,0,0],
   dempot_dth: [0,0,0,0],
+  dempot_dph: [0,0,0,0],
 
   for i thru 4 do(
+    dempot_dt[i]:  diff(empot_func[i],t),
     dempot_dr[i]:  diff(empot_func[i],r),
-    dempot_dth[i]: diff(empot_func[i],th)
+    dempot_dth[i]: diff(empot_func[i],th),
+    dempot_dph[i]: diff(empot_func[i],ph)
   ),
 
   load("f90"),
 
   with_stdout( sconcat(dir,em_name,"-empot.f90"),
-    f90( empot(1) = empot_func[1] ),
-    f90( empot(2) = empot_func[4] )
+    for i thru 4 do(
+      f90( empot(i) = empot_func[i] )
+    )
   ),
 
   with_stdout( sconcat(dir,em_name,"-dempot.f90"),
-    f90( dempot(1,1) = dempot_dr[1] ),
-    f90( dempot(1,2) = dempot_dth[1] ),
-    f90( dempot(2,1) = dempot_dr[4] ),
-    f90( dempot(2,2) = dempot_dth[4] )
+    for i thru 4 do(
+      f90( dempot(i,1) = dempot_dt[i] ),
+      f90( dempot(i,2) = dempot_dr[i] ),
+      f90( dempot(i,3) = dempot_dth[i] ),
+      f90( dempot(i,4) = dempot_dph[i] )
+    )
   ),
 
   with_stdout( sconcat(dir,em_name,"-param.f90"),
-    for p in em_parameters do(
-      print(sconcat("  real(dp) :: ",p))
-    )
+    if listp(em_parameters) then
+      for p in em_parameters do(
+        print(sconcat("  real(dp) :: ",p))
+      )
   ),
 
   with_stdout( sconcat(dir,em_name,".f90"),
